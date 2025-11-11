@@ -18,7 +18,7 @@ export const getBlock = async (blockHeight: number): Promise<any> => {
     return response.data;
   } catch (error) {
     logger(`Error fetching block ${blockHeight}, retrying...`);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     return await getBlock(blockHeight);
   }
 };
@@ -35,7 +35,7 @@ export const getlatestBlock = async (): Promise<any> => {
     return response.data;
   } catch (error) {
     logger(`Error fetching latest block, retrying...`);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     return await getlatestBlock();
   }
 };
@@ -47,7 +47,7 @@ export const getTransaction = async (txId: string): Promise<any> => {
     return response.data;
   } catch (error) {
     logger(`Error fetching transaction ${txId}, retrying...`);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     return await getTransaction(txId);
   }
 };

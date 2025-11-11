@@ -112,7 +112,7 @@ const startIndexing = async () => {
 
     //update the checkpoint
     await updateIndexingCheckpoint(currentBlockHeight);
-    logger(`Successfully indexed block ${currentBlockHeight}`);
+    logger(`Successfully indexed block ${currentBlockHeight - 1}`);
     await sleep(1000);
   }
 
