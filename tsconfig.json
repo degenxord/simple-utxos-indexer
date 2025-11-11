@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "CommonJS",
+    "allowJs": true,
+    "checkJs": true,
+    "outDir": "./build",
+    "rootDir": ".",
+    "noEmit": false,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "alwaysStrict": true,
+    "noEmitOnError": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts", "index.ts"], // Adjust the include pattern if needed
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}
