@@ -5,16 +5,18 @@ import { rateLimit } from "express-rate-limit";
 
 const app = express();
 
+// If behind a reverse proxy like nginx, make sure to let Express trust the proxy headers
+// This MUST be set before any middleware that uses IP addresses
+app.set("trust proxy", 1);
+
 // Proper rate limit middleware to avoid issues behind proxies (like Nginx)
 const limiter = rateLimit({
   windowMs: 1 * 1000, // 1 second window
   max: 100000, // Limit to 100000 requests per window per IP
   standardHeaders: true, // Send standardized rate limit info in headers
   legacyHeaders: false, // Disable old X-RateLimit-* headers
+  validate: false, // Disable strict validation for proxy headers
 });
-
-// If behind a reverse proxy like nginx, make sure to let Express trust the proxy headers
-app.set("trust proxy", 1);
 
 app.use(limiter);
 
