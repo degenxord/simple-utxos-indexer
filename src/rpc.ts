@@ -42,8 +42,12 @@ export const getlatestBlock = async (): Promise<any> => {
 
 export const getTransaction = async (txId: string): Promise<any> => {
   try {
-    const url = `https://mainnet.zcashexplorer.app/transactions/${txId}/raw`;
-    const response = await axios.get(url);
+    const query = {
+      id: 1,
+      method: "getrawtransaction",
+      params: [txId, 1],
+    };
+    const response = await axios.post(rpcUrl, query);
     return response.data;
   } catch (error) {
     logger(`Error fetching transaction ${txId}, retrying...`);
