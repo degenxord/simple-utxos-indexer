@@ -48,7 +48,7 @@ export const getTransaction = async (txId: string): Promise<any> => {
       params: [txId, 1],
     };
     const response = await axios.post(rpcUrl, query);
-    return response.data;
+    return response.data.result;
   } catch (error) {
     logger(`Error fetching transaction ${txId}, retrying...`);
     await new Promise((resolve) => setTimeout(resolve, 5000));
