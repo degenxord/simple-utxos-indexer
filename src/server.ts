@@ -22,7 +22,7 @@ app.use(limiter);
 
 app.use(cors({ origin: "*" }));
 
-app.get("/:address", async (req, res) => {
+app.get("/api/utxos/:address", async (req, res) => {
   const { address } = req.params;
   try {
     const utxos = await getUTXOs(address);
