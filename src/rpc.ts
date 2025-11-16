@@ -64,8 +64,13 @@ export const sendTransaction = async (transaction: string) => {
       params: [transaction],
     };
     const response = await axios.post(rpcUrl, query);
-    return response.data.result;
+    if (response.data.result) {
+      return response.data.result;
+    }
+    return response.data.error;
   } catch (error) {
+    const errorMessage = (error as Error).message;
+    return errorMessage;
     logger(`Error sending transaction, retrying...`);
   }
 };
