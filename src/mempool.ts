@@ -1,4 +1,8 @@
-import { deleteMempoolUTXOs, saveMempoolUTXOs } from "./db";
+import {
+  batchDeleteSpentUTXOs,
+  deleteMempoolUTXOs,
+  saveMempoolUTXOs,
+} from "./db";
 import { getRawMemPool, getTransaction } from "./rpc";
 
 // Track processed transactions to avoid re-processing
@@ -83,12 +87,22 @@ const mempoolScanner = async () => {
             await saveMempoolUTXOs(outputs);
           }
 
-          // Delete mempool UTXOs that are being spent by this transaction
+          // Delete ALL UTXOs (confirmed + mempool) that are being spent by this transaction
+          // Once a UTXO is used as input in mempool, it cannot be used again (double-spend protection)
           if (inputs.length > 0) {
             const inputIds = inputs.map((input) => input.id);
-            const deleted = await deleteMempoolUTXOs(inputIds);
-            if (deleted > 0) {
-              console.log(`Tx ${txId}: Deleted ${deleted} spent mempool UTXOs`);
+
+            // Delete unconfirmed (mempool) UTXOs
+            const mempoolDeleted = await deleteMempoolUTXOs(inputIds);
+
+            // Delete confirmed UTXOs
+            const confirmedDeleted = await batchDeleteSpentUTXOs(inputIds);
+
+            const totalDeleted = mempoolDeleted + confirmedDeleted;
+            if (totalDeleted > 0) {
+              console.log(
+                `Tx ${txId}: Deleted ${totalDeleted} spent UTXOs (${confirmedDeleted} confirmed, ${mempoolDeleted} mempool)`
+              );
             }
           }
 
@@ -106,4 +120,7 @@ const mempoolScanner = async () => {
   }
 };
 
-export default mempoolScanner;
+mempoolScanner().catch((error) => {
+  console.error("Mempool scanner crashed:", error);
+  process.exit(1);
+});
