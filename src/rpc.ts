@@ -67,7 +67,7 @@ export const sendTransaction = async (transaction: string) => {
     if (response.data.result) {
       return response.data.result;
     }
-    return response.data.error;
+    throw response.data.error;
   } catch (error) {
     const errorMessage = (error as Error).message;
     throw errorMessage;
