@@ -7,6 +7,7 @@ import {
   updateIndexingCheckpoint,
 } from "./db";
 import { logger } from "./logger";
+import mempoolScanner from "./mempool";
 import { getBlock, getlatestBlock, getTransaction } from "./rpc";
 import "./server";
 
@@ -186,6 +187,10 @@ const startIndexing = async () => {
   await startIndexing(); //restart the indexing
 };
 
+mempoolScanner().catch((error) => {
+  logger(`Error starting mempool scanner: ${error}`);
+  process.exit(1);
+});
 startIndexing().catch((error) => {
   logger(`Error starting indexing: ${error}`);
   process.exit(1);

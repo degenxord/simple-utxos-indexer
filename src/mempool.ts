@@ -106,7 +106,4 @@ const mempoolScanner = async () => {
   }
 };
 
-mempoolScanner().catch((error) => {
-  console.error("Mempool scanner crashed:", error);
-  process.exit(1);
-});
+export default mempoolScanner;
