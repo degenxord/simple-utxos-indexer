@@ -10,6 +10,7 @@ import "./server";
 
 //define the start height
 const START_HEIGHT = parseInt(process.env.START_HEIGHT || "3131019");
+const BATCH_SIZE = 10; // Process 10 blocks in parallel
 
 const indexUTXOs = async (blockHeight: number) => {
   const block = await getBlock(blockHeight);
@@ -109,14 +110,46 @@ const startIndexing = async () => {
   await initialize();
 
   while (latestBlockHeight > currentBlockHeight && isIndexing) {
-    logger(`Indexing block ${currentBlockHeight}`);
-    await indexUTXOs(currentBlockHeight);
-    currentBlockHeight++;
+    // Calculate how many blocks to process in this batch
+    const remainingBlocks = latestBlockHeight - currentBlockHeight;
+    const batchSize = Math.min(BATCH_SIZE, remainingBlocks);
 
-    //update the checkpoint
-    await updateIndexingCheckpoint(currentBlockHeight);
-    logger(`Successfully indexed block ${currentBlockHeight - 1}`);
-    await sleep(1000);
+    // Create array of block heights to process
+    const blockHeights = Array.from(
+      { length: batchSize },
+      (_, i) => currentBlockHeight + i
+    );
+
+    logger(
+      `Processing batch of ${batchSize} blocks: ${blockHeights[0]} to ${
+        blockHeights[batchSize - 1]
+      }`
+    );
+
+    // Process all blocks in the batch concurrently
+    try {
+      await Promise.all(
+        blockHeights.map(async (height) => {
+          logger(`Indexing block ${height}`);
+          await indexUTXOs(height);
+          logger(`Successfully indexed block ${height}`);
+        })
+      );
+
+      // Update current block height after successful batch processing
+      currentBlockHeight += batchSize;
+
+      // Update the checkpoint after the entire batch is processed
+      await updateIndexingCheckpoint(currentBlockHeight);
+      logger(`Batch complete. Updated checkpoint to ${currentBlockHeight}`);
+
+      await sleep(1000);
+    } catch (error) {
+      logger(
+        `Error processing batch starting at block ${currentBlockHeight}: ${error}`
+      );
+      throw error;
+    }
   }
 
   if (!isIndexing) {
@@ -124,7 +157,7 @@ const startIndexing = async () => {
     process.exit(0);
   }
 
-  logger("Waiting for 1 min before refetching the latest block...");
+  logger("Waiting for 10 seconds before refetching the latest block...");
   await sleep(10 * 1000); //wait for 10 seconds before restarting the indexing
   await startIndexing(); //restart the indexing
 };
