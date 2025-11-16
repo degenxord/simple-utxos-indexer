@@ -128,6 +128,74 @@ export const saveUTXOs = async (utxos: UTXO[]) => {
   }
 };
 
+export const saveMempoolUTXOs = async (utxos: UTXO[]) => {
+  try {
+    if (utxos.length === 0) return;
+    const db = await getDB();
+
+    // For mempool UTXOs, we want to insert only if they don't already exist
+    // Use bulkWrite with upsert to handle this efficiently
+    const operations = utxos.map((utxo) => ({
+      updateOne: {
+        filter: { id: utxo.id },
+        update: { $setOnInsert: utxo },
+        upsert: true,
+      },
+    }));
+
+    const result = await db.collection<UTXO>("utxos").bulkWrite(operations, {
+      ordered: false,
+    });
+
+    console.log(
+      `Mempool: ${result.upsertedCount} new UTXOs added, ${result.matchedCount} already exist`
+    );
+  } catch (error: any) {
+    console.error("Error saving mempool UTXOs:", error);
+    throw error;
+  }
+};
+
+export const markUTXOsAsConfirmed = async (
+  utxoIds: string[],
+  blockHeight: number
+) => {
+  try {
+    if (utxoIds.length === 0) return 0;
+    const db = await getDB();
+
+    const result = await db
+      .collection<UTXO>("utxos")
+      .updateMany(
+        { id: { $in: utxoIds }, confirmed: false },
+        { $set: { confirmed: true, blockHeight: blockHeight } }
+      );
+
+    return result.modifiedCount;
+  } catch (error) {
+    console.error("Error marking UTXOs as confirmed:", error);
+    throw error;
+  }
+};
+
+export const deleteMempoolUTXOs = async (utxoIds: string[]) => {
+  try {
+    if (utxoIds.length === 0) return 0;
+    const db = await getDB();
+
+    // Delete unconfirmed UTXOs that are being spent
+    const result = await db.collection<UTXO>("utxos").deleteMany({
+      id: { $in: utxoIds },
+      confirmed: false,
+    });
+
+    return result.deletedCount;
+  } catch (error) {
+    console.error("Error deleting mempool UTXOs:", error);
+    throw error;
+  }
+};
+
 export const getUTXOs = async (address: string) => {
   try {
     const db = await getDB();

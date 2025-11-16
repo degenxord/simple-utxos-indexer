@@ -40,6 +40,7 @@ app.get("/api/utxos/:address", async (req, res) => {
         vout: parseInt(utxo.id.split(":")[1]),
         address: utxo.address,
         blockHeight: utxo.blockHeight,
+        confirmed: utxo.confirmed, // Show if UTXO is confirmed or in mempool
       };
     });
 

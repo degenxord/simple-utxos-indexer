@@ -56,6 +56,28 @@ export const getTransaction = async (txId: string): Promise<any> => {
   }
 };
 
+export const getRawMemPool = async (): Promise<any> => {
+  try {
+    const query = {
+      id: 1,
+      method: "getrawmempool",
+      params: [],
+    };
+
+    const response = await axios.post(rpcUrl, query);
+
+    if (response.data.result) {
+      return response.data.result;
+    }
+    throw response.data.error;
+  } catch (error) {
+    const errorMessage = (error as Error).message;
+    logger(`Error fetching raw mempool, retrying...`);
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    return await getRawMemPool();
+  }
+};
+
 export const sendTransaction = async (transaction: string) => {
   try {
     const query = {

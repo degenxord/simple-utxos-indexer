@@ -1,6 +1,8 @@
 import {
   batchDeleteSpentUTXOs,
+  deleteMempoolUTXOs,
   getIndexingCheckpoint,
+  markUTXOsAsConfirmed,
   saveUTXOs,
   updateIndexingCheckpoint,
 } from "./db";
@@ -57,13 +59,22 @@ const indexUTXOs = async (blockHeight: number) => {
             address: output.scriptPubKey?.addresses[0],
             id: `${tx}:${output.n}`,
             blockHeight: blockHeight,
+            confirmed: true, // Block UTXOs are confirmed
           };
         })
         .filter((output: any) => output !== null)
     );
   }
 
+  // First, try to mark any existing mempool UTXOs as confirmed
   if (outputs.length > 0) {
+    const outputIds = outputs.map((output) => output.id);
+    const confirmedCount = await markUTXOsAsConfirmed(outputIds, blockHeight);
+    if (confirmedCount > 0) {
+      console.log(`Marked ${confirmedCount} mempool UTXOs as confirmed`);
+    }
+
+    // Then save the UTXOs (will skip duplicates that were just confirmed)
     logger(`saving ${outputs.length} utxos`);
     await saveUTXOs(outputs);
   }
@@ -71,8 +82,16 @@ const indexUTXOs = async (blockHeight: number) => {
   if (inputs.length > 0) {
     console.log(`Cleaning up ${inputs.length} spent utxos`);
     const inputIds = inputs.map((input) => input.id);
+
+    // Delete mempool UTXOs that are being spent
+    const mempoolDeleted = await deleteMempoolUTXOs(inputIds);
+    if (mempoolDeleted > 0) {
+      console.log(`Deleted ${mempoolDeleted} spent mempool UTXOs`);
+    }
+
+    // Delete confirmed UTXOs that are being spent
     const deletedCount = await batchDeleteSpentUTXOs(inputIds);
-    console.log(`Deleted ${deletedCount} spent utxos`);
+    console.log(`Deleted ${deletedCount} spent confirmed UTXOs`);
   }
 };
 
@@ -85,6 +104,7 @@ let latestBlockHeight = 0;
 
 const getIndexingHeight = async () => {
   const checkpoint = await getIndexingCheckpoint();
+
   if (checkpoint) {
     return checkpoint;
   }
