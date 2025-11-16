@@ -70,7 +70,7 @@ export const sendTransaction = async (transaction: string) => {
     return response.data.error;
   } catch (error) {
     const errorMessage = (error as Error).message;
-    return errorMessage;
+    throw errorMessage;
     logger(`Error sending transaction, retrying...`);
   }
 };
