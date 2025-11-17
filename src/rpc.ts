@@ -85,7 +85,7 @@ export const sendTransaction = async (transaction: string) => {
       method: "sendrawtransaction",
       params: [transaction],
     };
-    const response = await axios.post(rpcUrl, query);
+    const response = await axios.post(process.env.TX_SENDER!, query);
     if (response.data.result) {
       return response.data.result;
     }

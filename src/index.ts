@@ -183,6 +183,7 @@ const startIndexing = async () => {
   }
 
   logger("Waiting for 10 seconds before refetching the latest block...");
+ 
   await sleep(10 * 1000); //wait for 10 seconds before restarting the indexing
   await startIndexing(); //restart the indexing
 };
